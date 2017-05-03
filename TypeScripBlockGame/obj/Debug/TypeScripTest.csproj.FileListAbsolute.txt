@@ -1,6 +1,0 @@
-c:\users\kazuhiro\documents\visual studio 2015\Projects\TypeScripTest\TypeScripTest\bin\TypeScripTest.dll.config
-c:\users\kazuhiro\documents\visual studio 2015\Projects\TypeScripTest\TypeScripTest\bin\TypeScripTest.dll
-c:\users\kazuhiro\documents\visual studio 2015\Projects\TypeScripTest\TypeScripTest\bin\TypeScripTest.pdb
-c:\users\kazuhiro\documents\visual studio 2015\Projects\TypeScripTest\TypeScripTest\obj\Debug\TypeScripTest.csprojResolveAssemblyReference.cache
-c:\users\kazuhiro\documents\visual studio 2015\Projects\TypeScripTest\TypeScripTest\obj\Debug\TypeScripTest.dll
-c:\users\kazuhiro\documents\visual studio 2015\Projects\TypeScripTest\TypeScripTest\obj\Debug\TypeScripTest.pdb
