@@ -1,3 +1,3 @@
 # block-game
 like tetris
-![sample image](https://github.com/kasancode/block-game/mdimage/sample.png "sample")
+![sample image](https://raw.githubusercontent.com/kasancode/block-game/master/mdimage/sample.png "sample")
