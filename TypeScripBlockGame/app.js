@@ -2,7 +2,12 @@ var point = (function () {
     function point() {
     }
     return point;
-})();
+}());
+var size = (function () {
+    function size() {
+    }
+    return size;
+}());
 var blockTemplate = (function () {
     function blockTemplate(rotateCondition, block) {
         this.blocks = new Array(rotateCondition);
@@ -17,7 +22,7 @@ var blockTemplate = (function () {
         }
     }
     return blockTemplate;
-})();
+}());
 var action = (function () {
     function action() {
         this.rotateClock = false;
@@ -37,7 +42,7 @@ var action = (function () {
         return this.down || this.moveLeft || this.moveRight || this.rotateClock || this.rotateCounterclock;
     };
     return action;
-})();
+}());
 var block = (function () {
     function block(blockInfos) {
         this.degree = 0;
@@ -66,7 +71,7 @@ var block = (function () {
         return this.blockInfos[this.index].blocks[this.degree];
     };
     return block;
-})();
+}());
 var scene;
 (function (scene) {
     scene[scene["playing"] = 0] = "playing";
@@ -79,24 +84,100 @@ var label = (function () {
         this.font = font;
         this.color = color;
         this.position = position;
+        this.hide = false;
     }
-    label.prototype.draw = function (context) {
+    label.prototype.paint = function (context) {
+        if (this.hide)
+            return;
         context.fillStyle = this.color;
         context.font = this.font;
+        context.textAlign = "left";
+        context.textBaseline = "alphabetic";
         context.fillText(this.text, this.position.x, this.position.y);
         context.fill();
     };
-    label.prototype.drawText = function (context, text) {
+    return label;
+}());
+var button = (function () {
+    function button(text, font, color, position, size, backColor, hilightColor) {
+        this.hover = false;
+        this.pushed = false;
+        this.mousePushed = false;
+        this.hide = false;
+        this.text = text;
+        this.font = font;
+        this.color = color;
+        this.position = position;
+        this.size = size;
+        this.backColor = backColor;
+        this.hilightColor = hilightColor;
+        this.hide = false;
+        this.pushed = false;
+    }
+    button.prototype.move = function (event) {
+        this.hover = this.hittest(event);
+        this.pushed = this.hover && this.mousePushed;
+    };
+    button.prototype.mouseDown = function (event) {
+        if (event instanceof MouseEvent) {
+            this.mousePushed = event.button == 0;
+        }
+        else if (event instanceof TouchEvent) {
+            this.mousePushed = event.touches.length > 0;
+        }
+        this.hover = this.hittest(event);
+        this.pushed = this.hover && this.mousePushed;
+        if (this.pushed) {
+            this.pushedTime = Date.now();
+            if (this.onClick)
+                this.onClick();
+        }
+    };
+    button.prototype.mouseUp = function (event) {
+        this.mousePushed = false;
+        this.pushed = this.hover && this.mousePushed;
+    };
+    button.prototype.hittest = function (event) {
+        var x;
+        var y;
+        if (event instanceof MouseEvent) {
+            x = event.offsetX;
+            y = event.offsetY;
+        }
+        else if (event instanceof TouchEvent) {
+            var rect = event.srcElement.getBoundingClientRect();
+            x = event.touches[0].pageX - rect.left;
+            y = event.touches[0].pageY - rect.top;
+        }
+        return x >= this.position.x &&
+            y >= this.position.y &&
+            x <= this.position.x + this.size.width &&
+            y <= this.position.y + this.size.height;
+    };
+    button.prototype.paint = function (context) {
+        if (this.hide)
+            return;
+        if (this.hover) {
+            context.fillStyle = this.hilightColor;
+            context.fillRect(this.position.x, this.position.y, this.size.width, this.size.height);
+            context.fill();
+        }
+        context.strokeStyle = this.color;
+        context.strokeRect(this.position.x, this.position.y, this.size.width, this.size.height);
+        context.stroke();
         context.fillStyle = this.color;
         context.font = this.font;
-        context.fillText(text, this.position.x, this.position.y);
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText(this.text, this.position.x + this.size.width / 2, this.position.y + this.size.height / 2);
         context.fill();
     };
-    return label;
-})();
+    return button;
+}());
 var playGround = (function () {
-    function playGround(canvasId) {
-        this.canvas = document.getElementById(canvasId);
+    function playGround(canvas) {
+        var _this = this;
+        this.canvas = canvas;
         if (this.canvas == undefined)
             return;
         this.cell = new Array(20);
@@ -117,6 +198,24 @@ var playGround = (function () {
         this.scene = scene.playing;
         this.interval = 50;
         this.autoDropDefault = 1000;
+        this.canvas.onmousedown = function (event) {
+            _this.moveObjects.map(function (m) { return m.mouseDown(event); });
+        };
+        this.canvas.onmouseup = function (event) {
+            _this.moveObjects.map(function (m) { return m.mouseUp(event); });
+        };
+        this.canvas.onmousemove = function (event) {
+            _this.moveObjects.map(function (m) { return m.move(event); });
+        };
+        this.canvas.ontouchstart = function (event) {
+            _this.moveObjects.map(function (m) { return m.mouseDown(event); });
+        };
+        this.canvas.ontouchend = function (event) {
+            _this.moveObjects.map(function (m) { return m.mouseUp(event); });
+        };
+        this.canvas.ontouchmove = function (event) {
+            _this.moveObjects.map(function (m) { return m.move(event); });
+        };
         this.colorPattern = [
             "aqua",
             "yellow",
@@ -129,10 +228,45 @@ var playGround = (function () {
         this.backColor = "gray";
         this.blankCellColor = "black";
         this.scoreBase = [0, 40, 100, 300, 1200];
-        this.scoreLabel = new label("", "18px 'Segoe UI', sans-serif", "white", { x: 300, y: 210 });
-        this.levelLabel = new label("", "18px 'Segoe UI', sans-serif", "white", { x: 300, y: 240 });
-        this.nextLabel = new label("Next:", "18px 'Segoe UI', sans-serif", "white", { x: 300, y: 70 });
-        this.gameoverLabel = new label("Game Over!", "40px 'Segoe UI', sans-serif", "white", { x: 265, y: 300 });
+        var lblFont = "18px 'Segoe UI', sans-serif";
+        var lblClr = "white";
+        this.scoreLabel = new label("", lblFont, lblClr, { x: 300, y: 210 });
+        this.levelLabel = new label("", lblFont, lblClr, { x: 300, y: 240 });
+        this.nextLabel = new label("Next:", lblFont, lblClr, { x: 300, y: 70 });
+        this.gameoverLabel = new label("Game Over!", "40px 'Segoe UI', sans-serif", lblClr, { x: 265, y: 300 });
+        this.gameoverLabel.hide = true;
+        var btnSize = 30;
+        var btnBase = 400;
+        var btnLeft = 300;
+        var btnMrgn = 10;
+        var btnFont = "18px 'Segoe UI', sans-serif";
+        var btnFClr = "white";
+        var btnBClr = "black";
+        var btnHClr = "light gray";
+        var leftBtn = new button("←", btnFont, btnFClr, { x: btnLeft + (btnSize + btnMrgn) * 0, y: btnBase }, { width: btnSize, height: btnSize }, btnBClr, btnHClr);
+        leftBtn.onClick = function () { _this.action.moveLeft = true; };
+        var downBtn = new button("↓", btnFont, btnFClr, { x: btnLeft + (btnSize + btnMrgn) * 1, y: btnBase }, { width: btnSize, height: btnSize }, btnBClr, btnHClr);
+        downBtn.onClick = function () { _this.action.down = true; };
+        var rightBtn = new button("→", btnFont, btnFClr, { x: btnLeft + (btnSize + btnMrgn) * 2, y: btnBase }, { width: btnSize, height: btnSize }, btnBClr, btnHClr);
+        rightBtn.onClick = function () { _this.action.moveRight = true; };
+        var upBtn = new button("↑", btnFont, btnFClr, { x: btnLeft + (btnSize + btnMrgn) * 1, y: btnBase - (btnSize + btnMrgn) * 1 }, { width: btnSize, height: btnSize }, btnBClr, btnHClr);
+        upBtn.onClick = function () { _this.action.rotateClock = true; };
+        this.paintObjects = [
+            this.scoreLabel,
+            this.levelLabel,
+            this.nextLabel,
+            this.gameoverLabel,
+            leftBtn,
+            rightBtn,
+            downBtn,
+            upBtn
+        ];
+        this.moveObjects = [
+            leftBtn,
+            rightBtn,
+            downBtn,
+            upBtn
+        ];
         this.gameoverCooldown = 1000;
         this.currentblock = new block(this.blockInfos);
         this.reset();
@@ -155,18 +289,19 @@ var playGround = (function () {
     };
     playGround.prototype.start = function () {
         var _this = this;
-        this.timerToken = setInterval(function () { return _this.move(); }, this.interval);
+        this.timerToken = setInterval(function () {
+            _this.move();
+            _this.draw();
+        }, this.interval);
     };
     playGround.prototype.stop = function () {
         clearTimeout(this.timerToken);
     };
     playGround.prototype.draw = function () {
+        var _this = this;
         this.context.beginPath();
         this.context.fillStyle = this.backColor;
         this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        this.scoreLabel.drawText(this.context, "Score :  " + this.score.toString());
-        this.levelLabel.drawText(this.context, "Level :  " + this.level.toString());
-        this.nextLabel.draw(this.context);
         for (var l = 0; l < this.cell.length; l++) {
             for (var c = 0; c < this.cell[l].length; c++) {
                 if (this.cell[l][c] >= 0) {
@@ -180,10 +315,7 @@ var playGround = (function () {
         }
         this.drawblockInfos(this.blockInfos[this.nextblockType].blocks[0], this.nextblockType, this.nextblockPosition);
         this.drawblockInfos(this.currentblock.getblockInfos(), this.currentblock.index, this.currentblock.position);
-        if (this.scene == scene.gameOver) {
-            this.gameoverLabel.draw(this.context);
-        }
-        else if (this.scene == scene.lineFlashing) {
+        if (this.scene == scene.lineFlashing) {
             if (Math.floor(this.flashCounter / this.flashInterval) % 2 == 0) {
                 this.context.fillStyle = this.flashColor;
                 for (var l = 0; l < this.removeLineList.length; l++) {
@@ -193,6 +325,7 @@ var playGround = (function () {
                 }
             }
         }
+        this.paintObjects.map(function (p) { return p.paint(_this.context); });
     };
     playGround.prototype.drawCell = function (x, y) {
         this.context.fillRect(x * this.cellSize + this.cellPoistion.x, y * this.cellSize + this.cellPoistion.y, this.cellSize - 1, this.cellSize - 1);
@@ -207,8 +340,14 @@ var playGround = (function () {
         }
     };
     playGround.prototype.move = function () {
+        var t = Date.now();
+        this.moveObjects.map(function (m) {
+            if (m.pushed && (t - m.pushedTime) > 300 && m.onClick)
+                m.onClick();
+        });
+        this.gameoverLabel.hide = true;
         if (this.scene == scene.gameOver) {
-            this.draw();
+            this.gameoverLabel.hide = false;
             this.gameoverCounter += this.interval;
             if (this.gameoverCounter > this.gameoverCooldown && this.action.any()) {
                 this.reset();
@@ -223,7 +362,6 @@ var playGround = (function () {
                 this.flashCounter = 0;
                 this.removeLines(this.removeLineList);
             }
-            this.draw();
             return;
         }
         // this.scene == scene.playing
@@ -283,7 +421,8 @@ var playGround = (function () {
             }
         }
         this.action.reset();
-        this.draw();
+        this.scoreLabel.text = "Score :  " + this.score.toString();
+        this.levelLabel.text = "Level :  " + this.level.toString();
     };
     playGround.prototype.isFilled = function (line) {
         for (var c = 0; c < this.cell[line].length; c++) {
@@ -376,7 +515,7 @@ var playGround = (function () {
         ]);
     };
     return playGround;
-})();
+}());
 var play;
 document.onkeydown = function (event) {
     if (event.keyCode == 40) {
@@ -396,7 +535,10 @@ document.onkeydown = function (event) {
     }
 };
 window.onload = function () {
-    play = new playGround('play-ground');
+    var canvas = document.createElement("canvas");
+    canvas.id = "play-ground";
+    document.body.appendChild(canvas);
+    play = new playGround(canvas);
     play.start();
 };
 //# sourceMappingURL=app.js.map
