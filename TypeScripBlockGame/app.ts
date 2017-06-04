@@ -431,9 +431,9 @@ class playGround {
         this.gameoverLabel.hide = true;
 
 
-        let btnSize = 30;
+        let btnSize = 50;
         let btnBase = 400;
-        let btnLeft = 300;
+        let btnLeft = 280;
         let btnMrgn = 10;
         let btnFont = "18px 'Segoe UI', sans-serif";
         let btnFClr = "white";
