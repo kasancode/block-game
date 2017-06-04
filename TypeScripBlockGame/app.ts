@@ -364,22 +364,28 @@ class playGround {
 
         this.canvas.onmousedown = (event: MouseEvent) => {
             this.moveObjects.map((m) => m.mouseDown(event));
+            event.preventDefault();
         }
         this.canvas.onmouseup = (event: MouseEvent) => {
             this.moveObjects.map((m) => m.mouseUp(event));
+            event.preventDefault();
         }
         this.canvas.onmousemove = (event: MouseEvent) => {
             this.moveObjects.map((m) => m.move(event));
+            event.preventDefault();
         }
         
         this.canvas.ontouchstart = (event: TouchEvent) => {
             this.moveObjects.map((m) => m.mouseDown(event));
+            event.preventDefault();
         }
         this.canvas.ontouchend = (event: TouchEvent) => {
             this.moveObjects.map((m) => m.mouseUp(event));
+            event.preventDefault();
         }
         this.canvas.ontouchmove = (event: TouchEvent) => {
             this.moveObjects.map((m) => m.move(event));
+            event.preventDefault();
         }
 
         this.colorPattern = [

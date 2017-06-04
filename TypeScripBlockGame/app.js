@@ -200,21 +200,27 @@ var playGround = (function () {
         this.autoDropDefault = 1000;
         this.canvas.onmousedown = function (event) {
             _this.moveObjects.map(function (m) { return m.mouseDown(event); });
+            event.preventDefault();
         };
         this.canvas.onmouseup = function (event) {
             _this.moveObjects.map(function (m) { return m.mouseUp(event); });
+            event.preventDefault();
         };
         this.canvas.onmousemove = function (event) {
             _this.moveObjects.map(function (m) { return m.move(event); });
+            event.preventDefault();
         };
         this.canvas.ontouchstart = function (event) {
             _this.moveObjects.map(function (m) { return m.mouseDown(event); });
+            event.preventDefault();
         };
         this.canvas.ontouchend = function (event) {
             _this.moveObjects.map(function (m) { return m.mouseUp(event); });
+            event.preventDefault();
         };
         this.canvas.ontouchmove = function (event) {
             _this.moveObjects.map(function (m) { return m.move(event); });
+            event.preventDefault();
         };
         this.colorPattern = [
             "aqua",
