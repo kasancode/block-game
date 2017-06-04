@@ -126,8 +126,8 @@ var button = (function () {
             this.mousePushed = event.touches.length > 0;
         }
         this.hover = this.hittest(event);
-        this.pushed = this.hover && this.mousePushed;
-        if (this.pushed) {
+        if (!this.pushed && this.hover && this.mousePushed) {
+            this.pushed = this.hover && this.mousePushed;
             this.pushedTime = Date.now();
             if (this.onClick)
                 this.onClick();
